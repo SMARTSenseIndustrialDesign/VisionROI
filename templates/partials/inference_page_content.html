@@ -41,6 +41,73 @@
 </div>
 <script>
 (function(){
+const DEFAULT_CELL_ID='cam1';
+
+function resolveCellId(defaultId){
+    const raw=String(window.location.hash||'').replace(/^#/,'').trim();
+    if(!raw){
+        return defaultId;
+    }
+    const match=/^cam(\d+)$/i.exec(raw);
+    if(!match){
+        return defaultId;
+    }
+    const num=parseInt(match[1],10);
+    return Number.isFinite(num)&&num>0?`cam${num}`:defaultId;
+}
+
+function ensureLocationHash(cellId){
+    const expected=`#${cellId}`;
+    if(window.location.hash===expected){
+        return;
+    }
+    const baseUrl=`${window.location.pathname}${window.location.search||''}`;
+    window.history.replaceState(null,'',`${baseUrl}${expected}`);
+}
+
+function remapDomIds(baseId,targetId){
+    if(!baseId||!targetId||baseId===targetId){
+        return baseId;
+    }
+    const basePrefix=`${baseId}-`;
+    const targetPrefix=`${targetId}-`;
+    document.querySelectorAll(`[id^="${baseId}"]`).forEach(el=>{
+        if(el.id===baseId){
+            el.id=targetId;
+        }else if(el.id.startsWith(basePrefix)){
+            el.id=`${targetPrefix}${el.id.slice(basePrefix.length)}`;
+        }
+    });
+    document.querySelectorAll(`[for^="${baseId}"]`).forEach(label=>{
+        const current=label.getAttribute('for');
+        if(!current){
+            return;
+        }
+        if(current===baseId){
+            label.setAttribute('for',targetId);
+        }else if(current.startsWith(basePrefix)){
+            label.setAttribute('for',`${targetPrefix}${current.slice(basePrefix.length)}`);
+        }
+    });
+    return targetId;
+}
+
+function updateRowLabel(cellId){
+    const row=document.querySelector('.cam-row');
+    if(!row){
+        return;
+    }
+    const match=/^cam(\d+)$/i.exec(cellId);
+    if(match){
+        row.dataset.rowLabel=`สตรีม ${match[1]}`;
+    }
+}
+
+const requestedCellId=resolveCellId(DEFAULT_CELL_ID);
+const cellId=remapDomIds(DEFAULT_CELL_ID,requestedCellId)||DEFAULT_CELL_ID;
+updateRowLabel(cellId);
+ensureLocationHash(cellId);
+
 function initRoiLayout(cellId){
     const videoCell=document.getElementById(cellId);
     const videoCol=videoCell?videoCell.closest('.video-col'):null;
@@ -71,6 +138,10 @@ function createController(cellId){
     let roiSocket;
     let running=false;
     const cam=`page_${cellId}`;
+    const sessionRegistry=window.InferenceSessions;
+    const camRoot=document.getElementById(cellId);
+    const camRow=camRoot?camRoot.closest('.cam-row'):null;
+    const sessionTitle=camRow&&camRow.dataset.rowLabel?camRow.dataset.rowLabel:cellId;
     const getEl=suffix=>document.getElementById(`${cellId}-${suffix}`);
     const video=getEl('video');
     const videoCtx=video.getContext('2d');
@@ -249,6 +320,19 @@ function createController(cellId){
         setRunningUI();
         startLogUpdates(cfg.name);
         showAlert('Stream started','success');
+        const sourceOption=sourceSelect.options[sourceSelect.selectedIndex];
+        if(sessionRegistry&&typeof sessionRegistry.upsertSession==='function'){
+            sessionRegistry.upsertSession({
+                id:cam,
+                type:'page',
+                title:sessionTitle,
+                sourceId:sourceSelect.value||'',
+                sourceName:sourceOption?sourceOption.textContent:'',
+                page:pageNameEl?pageNameEl.textContent:'',
+                href:`/inference/page#${cellId}`,
+                status:'running'
+            });
+        }
         }
 
 
@@ -278,6 +362,12 @@ function createController(cellId){
                 if('group' in data){
                     setTimeout(()=>{
                         pageNameEl.innerText=data.group||'';
+                        if(sessionRegistry&&typeof sessionRegistry.updateSession==='function'){
+                            sessionRegistry.updateSession(cam,{
+                                page:data.group||'',
+                                status:'running'
+                            });
+                        }
                         if(Array.isArray(data.scores)){
                             scoreTableBody.innerHTML='';
                             data.scores.forEach(item=>{
@@ -537,6 +627,12 @@ function createController(cellId){
         stopButton.disabled=true;
         statusEl.innerText='Stopped';
         showAlert('Stream stopped','info');
+        if(sessionRegistry&&typeof sessionRegistry.updateSession==='function'){
+            sessionRegistry.updateSession(cam,{
+                status:'stopped',
+                page:''
+            });
+        }
     }
 
     function setRunningUI(){
@@ -592,10 +688,8 @@ function createController(cellId){
         await checkStatus();
     })();
 }
-document.addEventListener('DOMContentLoaded',()=>{
-    initRoiLayout('cam1');
-    createController('cam1');
-});
+initRoiLayout(cellId);
+createController(cellId);
 })();
 </script>
 

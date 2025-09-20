@@ -1,8 +1,88 @@
 {% extends "base.html" %}
-{% block title %}Inference Group{% endblock %}
-
-{% block shell_classes %}app-shell app-shell--fluid{% endblock %}
-
+{% block title %}Inference Hub{% endblock %}
 {% block content %}
-{% include 'partials/inference_content.html' %}
+<div class="inference-hub">
+  <section class="card inference-hero">
+    <div class="inference-hero__badge">ศูนย์ควบคุม Inference</div>
+    <h1 class="inference-hero__title">จัดการงานวิเคราะห์ภาพได้อย่างยืดหยุ่น</h1>
+    <p class="inference-hero__subtitle">
+      เลือกสร้างชุดงานแบบ Group หรือ Page เพื่อเข้าสู่หน้าจอเดิมที่คุ้นเคย แล้วเริ่มสตรีมจากแหล่งวิดีโอที่ต้องการ
+      เมื่อเริ่มสตรีม ระบบจะบันทึกรายการไว้ในหน้านี้ให้อัตโนมัติ เพื่อกลับมาตรวจสอบสถานะได้ง่ายขึ้น
+    </p>
+    <div class="inference-hero__actions">
+      <a class="btn btn-primary btn-lg js-create-inference" href="{{ url_for('inference_group') }}" data-inference-type="group">
+        <i class="bi bi-cpu me-2"></i>เริ่มสร้าง Group Inference
+      </a>
+      <a class="btn btn-outline-light btn-lg js-create-inference" href="{{ url_for('inference_page_alias') }}" data-inference-type="page">
+        <i class="bi bi-kanban me-2"></i>เริ่มสร้าง Page Inference
+      </a>
+    </div>
+  </section>
+
+  <section class="row g-4 inference-create-options">
+    <div class="col-lg-6">
+      <a href="{{ url_for('inference_group') }}" class="inference-option card h-100 js-create-inference" data-inference-type="group">
+        <div class="inference-option__icon bg-primary-subtle text-primary">
+          <i class="bi bi-grid-1x2-fill"></i>
+        </div>
+        <div>
+          <h2 class="inference-option__title">Group Inference</h2>
+          <p class="inference-option__desc">เหมาะสำหรับการจัดกลุ่ม ROI หลายรายการ เพื่อสลับดูผลได้ตามกลุ่มที่สร้างไว้</p>
+          <ul class="inference-option__list">
+            <li>รองรับหลายสตรีมพร้อมกัน</li>
+            <li>เลือกกลุ่ม ROI ที่ต้องการได้ทันที</li>
+            <li>ผูกกับข้อมูลเดิมของแต่ละแหล่งวิดีโอ</li>
+          </ul>
+          <span class="btn btn-outline-primary mt-2">ไปที่หน้า Group Inference</span>
+        </div>
+      </a>
+    </div>
+    <div class="col-lg-6">
+      <a href="{{ url_for('inference_page_alias') }}" class="inference-option card h-100 js-create-inference" data-inference-type="page">
+        <div class="inference-option__icon bg-info-subtle text-info">
+          <i class="bi bi-layout-text-sidebar-reverse"></i>
+        </div>
+        <div>
+          <h2 class="inference-option__title">Page Inference</h2>
+          <p class="inference-option__desc">ออกแบบสำหรับงานที่ต้องติดตามคะแนนของแต่ละหน้า พร้อมตารางสรุปผลแบบเรียลไทม์</p>
+          <ul class="inference-option__list">
+            <li>ดึงผลคะแนนของแต่ละหน้าได้ทันที</li>
+            <li>ดูตารางสรุปผลพร้อมวิดีโอสตรีม</li>
+            <li>ตั้งค่าเวลาและ ROI ได้อย่างยืดหยุ่น</li>
+          </ul>
+          <span class="btn btn-outline-info mt-2">ไปที่หน้า Page Inference</span>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <section class="card inference-list">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+      <div>
+        <h2 class="inference-list__title">รายการ Inference ที่สร้างไว้</h2>
+        <p class="inference-list__subtitle mb-0">ระบบจะอัปเดตสถานะให้อัตโนมัติเมื่อคุณเริ่มหรือหยุดสตรีม</p>
+      </div>
+      <div class="btn-group">
+        <button id="refreshSessions" class="btn btn-outline-secondary btn-sm" type="button">
+          <i class="bi bi-arrow-clockwise me-1"></i>รีเฟรช
+        </button>
+        <button id="clearSessions" class="btn btn-outline-danger btn-sm" type="button">
+          <i class="bi bi-trash3 me-1"></i>ล้างรายการทั้งหมด
+        </button>
+      </div>
+    </div>
+
+    <div id="inferenceSessionsContainer" class="inference-sessions mt-4"></div>
+    <div id="inferenceSessionsEmpty" class="inference-empty text-center py-5">
+      <div class="inference-empty__icon">
+        <i class="bi bi-collection-play"></i>
+      </div>
+      <h3 class="inference-empty__title">ยังไม่มีรายการที่บันทึกไว้</h3>
+      <p class="inference-empty__desc mb-0">ไปยังหน้าที่ต้องการ สร้างงานใหม่ เลือก Source และกด Start เพื่อให้ระบบนำมาขึ้นรายการที่นี่</p>
+    </div>
+  </section>
+</div>
+{% endblock %}
+{% block extra_scripts %}
+  <script src="{{ url_for('static', filename='js/inference-dashboard.js') }}"></script>
 {% endblock %}

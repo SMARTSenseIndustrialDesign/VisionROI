@@ -781,12 +781,22 @@ async def roi_page():
 
 
 @app.route("/inference")
-async def inference() -> str:
+async def inference_hub() -> str:
     return await render_template("inference.html")
+
+
+@app.route("/inference/group")
+async def inference_group() -> str:
+    return await render_template("inference_group.html")
 
 
 @app.route("/inference_page")
 async def inference_page() -> str:
+    return await render_template("inference_page.html")
+
+
+@app.route("/inference/page")
+async def inference_page_alias() -> str:
     return await render_template("inference_page.html")
 
 

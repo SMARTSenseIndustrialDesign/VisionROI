@@ -59,13 +59,13 @@
             </a>
           </li>
           <li class="nav-item">
-            <a href="/inference" class="nav-link" data-bs-toggle="tooltip" title="Inference Group">
+            <a href="/inference" class="nav-link" data-bs-toggle="tooltip" title="Inference Hub" data-active-paths="/inference,/inference/group">
               <i class="bi bi-cpu me-2"></i>
-              <span>Inference Group</span>
+              <span>Inference Hub</span>
             </a>
           </li>
           <li class="nav-item">
-            <a href="/inference_page" class="nav-link" data-bs-toggle="tooltip" title="Inference Page">
+            <a href="/inference/page" class="nav-link" data-bs-toggle="tooltip" title="Inference Page" data-active-paths="/inference/page,/inference_page">
               <i class="bi bi-kanban me-2"></i>
               <span>Inference Page</span>
             </a>
@@ -75,6 +75,7 @@
     </div>
   </nav>
   {% include 'partials/alert.html' %}
+  <script src="{{ url_for('static', filename='js/inference-sessions.js') }}"></script>
   <main id="content" class="app-main">
     <div class="{% block shell_classes %}app-shell container-xxl{% endblock %}">
       {% block content %}{% endblock %}
@@ -85,12 +86,15 @@
   <script>
     function setActiveLink(path) {
       document.querySelectorAll('.navbar-nav .nav-link').forEach(link => {
-        link.classList.toggle('active', link.getAttribute('href') === path);
+        const dataPaths = link.getAttribute('data-active-paths');
+        const paths = dataPaths ? dataPaths.split(',') : [link.getAttribute('href')];
+        link.classList.toggle('active', paths.includes(path));
       });
     }
     window.addEventListener('DOMContentLoaded', () => {
       setActiveLink(window.location.pathname);
     });
   </script>
+  {% block extra_scripts %}{% endblock %}
 </body>
 </html>
